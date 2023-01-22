@@ -21,7 +21,7 @@ Our open-sourced dataset contains 7 types of VUI responses as shown in the follo
 | Clock          | Time in **Tusla** Oklahoma United States is **12:31 A.M. on Tuesday**. | Location, Time | 1593 |
 | Reminder       | **Order Groceries**. When do you want to be reminded? | Todo | 2950 |
 | Reminder       | All right. I will remind you on **Monday at 7 P.M.** | Time | 2081 |
-| Stock          | | Search History | 1318 |
+| Stock          | **Apple** closed down 1.5% at $153.34. | Search History | 1318 |
 | Navigation <br />(San Diego) | Use the left two lanes to **turn left** onto **Convoy Street** | GPS trace | 5096 |
 | Navigation <br />(New York)  | In a quarter mile **turn left** onto **Hancock Place** | GPS trace | 2794 |
 
