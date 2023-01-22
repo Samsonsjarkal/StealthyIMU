@@ -1,6 +1,10 @@
 # StealthyIMU: Stealing Permission-protected Private Information From Smartphone Voice Assistant Using Zero-Permission Sensors, NDSS 2023
 
-StealthyIMU is a privacy threat that uses motion sensors to steal permission-protected private information from the Voice User Interfaces (VUIs) on smartphone. StealthyIMU can steal private information from 23 types of frequently-used voice commands to acquire contacts, search history, calendar, home address, and even GPS trace with high accuracy. Please refer to our [StealthyIMU](https://github.com/Samsonsjarkal/KeSun/blob/master/files/ndss23_StealthyIMU.pdf) paper in NDSS 2023 for more details. 
+[![](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/Samsonsjarkal/StealthyIMU/blob/master/LICENSE) 
+[![](https://img.shields.io/github/stars/Samsonsjarkal/StealthyIMU.svg)](https://github.com/Samsonsjarkal/StealthyIMU/stargazers)
+[![](https://img.shields.io/github/forks/Samsonsjarkal/StealthyIMU.svg)](https://github.com/Samsonsjarkal/StealthyIMU/network) 
+
+StealthyIMU is a privacy threat that uses motion sensors to steal permission-protected private information from the Voice User Interfaces (VUIs) on smartphone. StealthyIMU can steal private information from 23 types of frequently-used voice commands to acquire contacts, search history, calendar, home address, and even GPS trace with high accuracy. Please refer to [our StealthyIMU paper](https://github.com/Samsonsjarkal/KeSun/blob/master/files/ndss23_StealthyIMU.pdf) in NDSS 2023 for more details. 
 
 In this repo, we release our collected VUI response dataset, which contains the ground truth permission-protected private entities, audio recording, and corresponding accelerometer and gyroscope signals for each VUI response. Besides, we open-source the basic Spoken Language Model (SLU) DNN model that steals the permission-protected private entities from the motion sensor signals on smartphone.
 
@@ -33,10 +37,55 @@ For each VUI response, we provide the following information:
 The dataset can be downloaded from the [Google Drive]().
 
 
-## Dataset Preparation
+## Prerequisites
 
-## Evaluation Tool
-## Baseline models and results
+Our implentation is based on the [SpeechBrain](https://github.com/speechbrain/speechbrain)
+Once you have created your Python environment (Python 3.7+), you can install the SpeechBrain via pip.
 
-## Reference 
+```pip install speechbrain```
+
+Then make sure that you can access SpeechBrain with:
+
+```import speechbrain as sb```
+
+We provide a baseline Spoken Language Understanding (SLU) model and results in the folder ["results"]()
+
+You can also train a baseline Spoken Language Understanding (SLU) model for StealthyIMU with:
+
+```python train.py hparams/baseline.yaml```
+
+Note that the pretrained tokenizer is provided in the file folder ["pretrain"](). If you want to train a tokenizer by your self, please refer to [SpeechBrain SLURP](https://github.com/speechbrain/speechbrain/tree/develop/recipes/SLURP). If you want to modify more parameters in the model, please refer to ["hparams/baseline.yaml"](). 
+
+## Evaluation Tool and Baseline Results
+
+Once you train and test the model. You will receive a testing result ["wer_test_real.txt"]().
+
+You can evaluate StealthyIMU via our evaluation tool with
+
+```python eval/eval.py ./results/BPE51_all_opensource/1235/wer_test_real.txt```
+
+Here is an example results of our baseline model. You can improve this baseline results by designing a better SLU model or balance different types of VUI response data in the training dataset as discussed in [our StealthyIMU paper](https://github.com/Samsonsjarkal/KeSun/blob/master/files/ndss23_StealthyIMU.pdf).
+
+| Type          | TER | SER | SEER |
+| ------------- | --- | --- | ---- |
+| Weather        | 0.0% | 2.5%  | 1.2% | 
+| Sun set&rise   | 0.0% | 12.0% | 6.0% |
+| AirCheck       | 0.0% | 7.8%  | 3.9% |
+| Clock          | 0.0% | 1.8%  | 0.9% |
+| Reminder (Todo)| 0.0% | 18.8% | 9.4% |
+| Reminder (Time)| 0.0% | 29.7% | 14.9% |
+| Stock          | 0.0% | 31.3% | 15.7% |
+| Navigation     | 0.0% | 38.6% | 15.9% |
+| Overall        | 0.0% | 16.5% | 8.5% |
+
+## Citing StealthyIMU 
 Ke Sun, Chunyu Xia, Songlin Xu, Xinyu Zhang. StealthyIMU: Extracting Permission-protected Private Information from Smartphone Voice Assistant using Zero-Permission Sensors. In Proceedings of NDSS, 2023
+
+```bibtex
+@inproceedings{sun2023stealthyimu,
+  title={{StealthyIMU}: Extracting Permission-protected Private Information from Smartphone Voice Assistant using Zero-Permission Sensors,
+  author={Sun, Ke and Xia, Chunyu and Xu, Songlin and Zhang, Xinyu},
+  year={2023},
+  booktitle={NDSS},
+}
+```
