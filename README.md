@@ -63,7 +63,7 @@ Note that
 
 ## Evaluation Tool and Baseline Results
 
-Once you train and test the model. You will receive a testing result ["wer_test_real.txt"]().
+Once you train and test the model. You will receive a testing result ["wer_test_real.txt"](https://github.com/Samsonsjarkal/StealthyIMU/blob/main/results/BPE51_all_opensource/1235/wer_test_real.txt).
 
 You can evaluate StealthyIMU via our evaluation tool with
 
