@@ -34,10 +34,10 @@ For each VUI response, we provide the following information:
 - The MSS signals after normalization (.accnpy, .gyronpy)
 - The GPS trace/ location for the navigation command (.gps)
 
-The dataset can be downloaded from the [Google Drive]().
+The dataset can be downloaded from the [Google Drive](https://drive.google.com/file/d/18wBg8mehJZ0gLW6O8T7fkq53J-8EQLdJ/view?usp=sharing).
 
 
-## Prerequisites
+## Prerequisites and Training
 
 Our implentation is based on the [SpeechBrain](https://github.com/speechbrain/speechbrain)
 Once you have created your Python environment (Python 3.7+), you can install the SpeechBrain via pip.
@@ -48,13 +48,18 @@ Then make sure that you can access SpeechBrain with:
 
 ```import speechbrain as sb```
 
-We provide a baseline Spoken Language Understanding (SLU) model and results in the folder ["results"]()
+We provide [a pretrained baseline Spoken Language Understanding (SLU) model and results](https://drive.google.com/file/d/19b3LzaoLIGkdDrxYYxV9NhARg_Bw_z4b/view?usp=sharing). 
 
 You can also train a baseline Spoken Language Understanding (SLU) model for StealthyIMU with:
 
 ```python train.py hparams/baseline.yaml```
 
-Note that the pretrained tokenizer is provided in the file folder ["pretrain"](). If you want to train a tokenizer by your self, please refer to [SpeechBrain SLURP](https://github.com/speechbrain/speechbrain/tree/develop/recipes/SLURP). If you want to modify more parameters in the model, please refer to ["hparams/baseline.yaml"](). 
+Note that
+- You may need to change the "data_folder" in ["hparams/baseline.yaml"](https://github.com/Samsonsjarkal/StealthyIMU/blob/main/hparams/open_source.yaml) to your download folder. If you want to modify more parameters in the model, please refer to ["hparams/baseline.yaml"](https://github.com/Samsonsjarkal/StealthyIMU/blob/main/hparams/open_source.yaml).
+
+- The pretrained tokenizer is provided in the file folder ["pretrain"](https://github.com/Samsonsjarkal/StealthyIMU/blob/main/pretrain). If you want to train a tokenizer by your self, please refer to [SpeechBrain SLURP](https://github.com/speechbrain/speechbrain/tree/develop/recipes/SLURP). 
+
+
 
 ## Evaluation Tool and Baseline Results
 
