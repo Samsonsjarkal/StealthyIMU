@@ -1,0 +1,191 @@
+# ############################################################################
+# Model: StealthyIMU
+# Authors:  Ke Sun, Chunyu Xia 2022
+# ############################################################################
+
+# Seed needs to be set at top of yaml, before objects with parameters are made
+seed: 1235
+__set_seed: !apply:torch.manual_seed [!ref <seed>]
+output_folder: !ref results/BPE51_all_opensource_test/<seed>
+save_folder: !ref <output_folder>/save
+train_log: !ref <output_folder>/train_log.txt
+
+# Data files
+file_name: metadata/stealthyIMU_all_relative.csv
+data_folder: /data/SoK/StealthyIMU_organize/
+train_splits: ["train_synthetic", "train_real"]
+csv_train: !ref <output_folder>/train-type=direct.csv
+csv_valid: !ref <output_folder>/valid-type=direct.csv
+csv_test: !ref <output_folder>/test-type=direct.csv
+tokenizer_file: !ref pretrain/51_unigram.model
+skip_prep: False
+
+# Training parameters
+number_of_epochs: 20
+batch_size: 8
+lr: 0.0003
+token_type: unigram # ["unigram", "bpe", "char"]
+sorting: random
+ckpt_interval_minutes: 15 # save checkpoint every N min
+
+# Model parameters
+sample_rate: 500
+n_fft: 80
+n_win_length: 80
+n_hop_length: 20
+n_feature: 31
+emb_size: 64
+dec_neurons: 256
+output_neurons: 51 # index(eos/bos) = 0
+ASR_encoder_dim: 256
+
+# Encoding parameters
+activation: !name:torch.nn.LeakyReLU
+dropout: 0.15
+cnn_blocks: 2
+cnn_channels: (64, 128)
+inter_layer_pooling_size: (2, 2)
+cnn_kernelsize: (3, 3)
+time_pooling_size: 2
+rnn_class: !name:speechbrain.nnet.RNN.LSTM
+rnn_layers: 4
+rnn_neurons: 256
+rnn_bidirectional: True
+dnn_blocks: 2
+dnn_neurons: 256
+
+# Decoding parameters
+bos_index: 0
+eos_index: 0
+min_decode_ratio: 0.0
+max_decode_ratio: 10.0
+slu_beam_size: 80
+eos_threshold: 1.5
+temperature: 1.25
+
+dataloader_opts:
+    batch_size: !ref <batch_size>
+    shuffle: True
+
+epoch_counter: !new:speechbrain.utils.epoch_loop.EpochCounter
+    limit: !ref <number_of_epochs>
+
+normalize: !new:speechbrain.processing.features.InputNormalization
+   norm_type: global
+
+compute_features: !new:feature.AccSpec
+   sample_rate: !ref <sample_rate>
+   win_length: !ref <n_win_length>
+   hop_length: !ref <n_hop_length>
+   n_fft: !ref <n_fft>
+
+enc: !new:speechbrain.lobes.models.CRDNN.CRDNN
+    input_shape: [null, null, !ref <n_feature>]
+    activation: !ref <activation>
+    dropout: !ref <dropout>
+    cnn_blocks: !ref <cnn_blocks>
+    cnn_channels: !ref <cnn_channels>
+    cnn_kernelsize: !ref <cnn_kernelsize>
+    inter_layer_pooling_size: !ref <inter_layer_pooling_size>
+    time_pooling: True
+    using_2d_pooling: False
+    time_pooling_size: !ref <time_pooling_size>
+    rnn_class: !ref <rnn_class>
+    rnn_layers: !ref <rnn_layers>
+    rnn_neurons: !ref <rnn_neurons>
+    rnn_bidirectional: !ref <rnn_bidirectional>
+    rnn_re_init: True
+    dnn_blocks: !ref <dnn_blocks>
+    dnn_neurons: !ref <dnn_neurons>
+
+output_emb: !new:speechbrain.nnet.embedding.Embedding
+    num_embeddings: !ref <output_neurons>
+    embedding_dim: !ref <emb_size>
+
+dec: !new:speechbrain.nnet.RNN.AttentionalRNNDecoder
+    enc_dim: !ref <dnn_neurons>
+    input_size: !ref <emb_size>
+    rnn_type: gru
+    attn_type: keyvalue
+    hidden_size: !ref <dec_neurons>
+    attn_dim: 256
+    num_layers: 3
+    scaling: 1.0
+    dropout: 0.0
+
+seq_lin: !new:speechbrain.nnet.linear.Linear
+    input_size: !ref <dec_neurons>
+    n_neurons: !ref <output_neurons>
+
+env_corrupt: !new:speechbrain.lobes.augment.EnvCorrupt
+    babble_prob: 0.0
+    reverb_prob: 0.0
+    noise_prob: 1.0
+    noise_snr_low: 0
+    noise_snr_high: 15
+
+modules:
+    enc: !ref <enc>
+    output_emb: !ref <output_emb>
+    dec: !ref <dec>
+    seq_lin: !ref <seq_lin>
+    env_corrupt: !ref <env_corrupt>
+
+model: !new:torch.nn.ModuleList
+    - [!ref <enc>, !ref <output_emb>,
+       !ref <dec>, !ref <seq_lin>]
+
+
+tokenizer: !new:sentencepiece.SentencePieceProcessor
+
+pretrainer: !new:speechbrain.utils.parameter_transfer.Pretrainer
+    collect_in: !ref <save_folder>/SLURM_tokenizer
+    loadables:
+        tokenizer: !ref <tokenizer>
+    paths:
+        tokenizer: !ref <tokenizer_file>
+
+beam_searcher: !new:speechbrain.decoders.S2SRNNBeamSearcher
+    embedding: !ref <output_emb>
+    decoder: !ref <dec>
+    linear: !ref <seq_lin>
+    bos_index: !ref <bos_index>
+    eos_index: !ref <eos_index>
+    min_decode_ratio: !ref <min_decode_ratio>
+    max_decode_ratio: !ref <max_decode_ratio>
+    beam_size: !ref <slu_beam_size>
+    eos_threshold: !ref <eos_threshold>
+    temperature: !ref <temperature>
+    using_max_attn_shift: False
+    max_attn_shift: 30
+    coverage_penalty: 0.
+
+opt_class: !name:torch.optim.Adam
+    lr: !ref <lr>
+
+lr_annealing: !new:speechbrain.nnet.schedulers.NewBobScheduler
+    initial_value: !ref <lr>
+    improvement_threshold: 0.0025
+    annealing_factor: 0.8
+    patient: 0
+
+checkpointer: !new:speechbrain.utils.checkpoints.Checkpointer
+    checkpoints_dir: !ref <save_folder>
+    recoverables:
+        model: !ref <model>
+        scheduler: !ref <lr_annealing>
+        counter: !ref <epoch_counter>
+
+log_softmax: !new:speechbrain.nnet.activations.Softmax
+    apply_log: True
+
+seq_cost: !name:speechbrain.nnet.losses.nll_loss
+    label_smoothing: 0.1
+
+train_logger: !new:speechbrain.utils.train_logger.FileTrainLogger
+    save_file: !ref <train_log>
+
+error_rate_computer: !name:speechbrain.utils.metric_stats.ErrorRateStats
+
+cer_computer: !name:speechbrain.utils.metric_stats.ErrorRateStats
+    split_tokens: True
